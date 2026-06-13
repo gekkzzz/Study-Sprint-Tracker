@@ -31,7 +31,7 @@ jobs:
 
       - name: Track HTML Sprint Progress
         id: sprint
-        uses: your-username/study-sprint-tracker@v1   # replace with real ref
+        uses: your-username/study-sprint-tracker@v1
         with:
           track_name: 'HTML in 30 Days'
           total_days: 30

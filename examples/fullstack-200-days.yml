@@ -30,7 +30,7 @@ jobs:
 
       - name: Track Full Stack Sprint Progress
         id: sprint
-        uses: gekkzzz/study-sprint-tracker@v1 #replace with your username
+        uses: your-username/study-sprint-tracker@v1
         with:
           track_name: 'Full Stack'
           total_days: 200

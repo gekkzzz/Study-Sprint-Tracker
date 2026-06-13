@@ -57,3 +57,7 @@ Please include:
 ### Feature Requests
 
 Feature requests are welcome. Open an issue with the **enhancement** label and describe the use case.
+
+---
+
+[← Back to README](README.md)

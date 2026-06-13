@@ -4,6 +4,7 @@
 
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Study%20Sprint%20Tracker-purple?logo=github)](https://github.com/marketplace/actions/study-sprint-tracker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Support](https://img.shields.io/badge/Support-open%20an%20issue-blue?logo=github)](SUPPORT.md)
 
 Study Sprint Tracker is a GitHub Action that runs every time you push code. It
 reads your chosen track name and sprint length, calculates how far into the
@@ -322,6 +323,16 @@ If you are unsure whether your idea fits the project, open an issue first to dis
 4. Add or update tests in `__tests__/index.test.js` — all tests must pass (`npm test`).
 5. Rebuild the bundle: `npm run build` — always commit the updated `dist/` alongside your source changes.
 6. Open a pull request against `main` with a clear description of what changed and why.
+
+---
+
+## Legal & Support
+
+| Document | Description |
+| -------- | ----------- |
+| [Support](SUPPORT.md) | Troubleshooting, common issues, and how to open a bug report |
+| [Terms of Service](TERMS_OF_SERVICE.md) | Usage terms for the Action |
+| [Privacy Policy](PRIVACY_POLICY.md) | What data the Action reads and writes |
 
 ---
 

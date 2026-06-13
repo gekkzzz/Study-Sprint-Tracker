@@ -35,3 +35,7 @@ This policy may be updated to reflect changes in how the Action works. Updates w
 ## Contact
 
 For privacy-related questions, open an issue at [github.com/gekkzzz/Study-Sprint-Tracker/issues](https://github.com/gekkzzz/Study-Sprint-Tracker/issues).
+
+---
+
+[← Back to README](README.md)

@@ -32,3 +32,7 @@ These terms may be updated at any time. Continued use of the Action after change
 ## 7. Contact
 
 For questions about these terms, open an issue at [github.com/gekkzzz/Study-Sprint-Tracker/issues](https://github.com/gekkzzz/Study-Sprint-Tracker/issues).
+
+---
+
+[← Back to README](README.md)

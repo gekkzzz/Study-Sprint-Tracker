@@ -1,0 +1,206 @@
+# ============================================================
+# integration-test.yml
+#
+# Runs automatically on every pull request to verify that:
+#   1. All Jest unit tests pass
+#   2. The action compiles cleanly with ncc
+#   3. The action runs end-to-end inside this repository
+#      without crashing (skip_git=true avoids an actual push)
+#
+# This workflow acts as the PR gate before any release.
+# ============================================================
+
+name: Integration Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read   # read-only; skip_git=true means no write needed
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # Job 1 — Unit tests
+  # ──────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests (Jest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Jest unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        # Always upload so the report is visible even when tests fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────
+  # Job 2 — Build verification
+  # ──────────────────────────────────────────────────────────
+  build:
+    name: Build dist bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with ncc
+        run: npm run build
+
+      - name: Verify dist/index.js was produced
+        run: |
+          if [ ! -f dist/index.js ]; then
+            echo "❌ dist/index.js not found after build!"
+            exit 1
+          fi
+          echo "✅ dist/index.js exists ($(du -sh dist/index.js | cut -f1))"
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-bundle
+          path: dist/
+          retention-days: 3
+
+  # ──────────────────────────────────────────────────────────
+  # Job 3 — End-to-end dry run
+  # Uses the local action via `uses: ./` so the exact code
+  # on this PR branch is exercised, not a published release.
+  # skip_git=true prevents any git commit/push.
+  # ──────────────────────────────────────────────────────────
+  e2e-dry-run:
+    name: E2E Dry Run
+    runs-on: ubuntu-latest
+    needs: build   # wait for a clean build before running
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build the dist bundle so `uses: ./` picks up the latest code
+      - name: Build dist bundle
+        run: npm run build
+
+      # ── Scenario A: standard mid-sprint day ──
+      - name: 'Dry run — mid-sprint (Day 15 of 30)'
+        id: mid-sprint
+        uses: ./
+        with:
+          track_name:   'Integration Test Track'
+          total_days:   30
+          # A fixed past date ensures Day 15 regardless of when the PR runs
+          start_date:   '2020-01-01'
+          journal_file: '/tmp/test-journal-mid.md'
+          skip_git:     'true'
+
+      - name: Verify mid-sprint outputs
+        run: |
+          echo "progress      = ${{ steps.mid-sprint.outputs.progress }}"
+          echo "current_day   = ${{ steps.mid-sprint.outputs.current_day }}"
+          echo "goal_achieved = ${{ steps.mid-sprint.outputs.goal_achieved }}"
+
+          if [ "${{ steps.mid-sprint.outputs.goal_achieved }}" != "true" ]; then
+            echo "❌ Expected goal_achieved=true for a sprint started in 2020"
+            exit 1
+          fi
+          echo "✅ Scenario A passed"
+
+      # ── Scenario B: Day 1 run ──
+      - name: Get today's date
+        id: today
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: 'Dry run — Day 1 (sprint starts today)'
+        id: day-one
+        uses: ./
+        with:
+          track_name:   'Day-One Test'
+          total_days:   100
+          start_date:   '${{ steps.today.outputs.date }}'
+          journal_file: '/tmp/test-journal-day1.md'
+          skip_git:     'true'
+
+      - name: Verify Day 1 outputs
+        run: |
+          echo "current_day   = ${{ steps.day-one.outputs.current_day }}"
+          echo "days_remaining= ${{ steps.day-one.outputs.days_remaining }}"
+
+          if [ "${{ steps.day-one.outputs.current_day }}" != "1" ]; then
+            echo "❌ Expected current_day=1 when sprint starts today"
+            exit 1
+          fi
+          if [ "${{ steps.day-one.outputs.days_remaining }}" != "99" ]; then
+            echo "❌ Expected days_remaining=99 for a 100-day sprint on Day 1"
+            exit 1
+          fi
+          echo "✅ Scenario B passed"
+
+      # ── Scenario C: missing journal file — action must create it ──
+      - name: 'Dry run — journal file does not exist yet'
+        id: new-journal
+        uses: ./
+        with:
+          track_name:   'New Journal Test'
+          total_days:   50
+          start_date:   '2020-06-01'
+          journal_file: '/tmp/brand-new-journal.md'
+          skip_git:     'true'
+
+      - name: Verify journal was created
+        run: |
+          if [ ! -f /tmp/brand-new-journal.md ]; then
+            echo "❌ Journal file was not created"
+            exit 1
+          fi
+          echo "✅ Scenario C passed — journal contents:"
+          cat /tmp/brand-new-journal.md
+
+      # ── Print a combined job summary ──
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## 🧪 E2E Dry Run Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Scenario | current_day | goal_achieved | progress |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Mid-sprint | ${{ steps.mid-sprint.outputs.current_day }} | ${{ steps.mid-sprint.outputs.goal_achieved }} | ${{ steps.mid-sprint.outputs.progress }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Day 1      | ${{ steps.day-one.outputs.current_day }} | ${{ steps.day-one.outputs.goal_achieved }} | ${{ steps.day-one.outputs.progress }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| New journal| ${{ steps.new-journal.outputs.current_day }} | ${{ steps.new-journal.outputs.goal_achieved }} | ${{ steps.new-journal.outputs.progress }} |" >> "$GITHUB_STEP_SUMMARY"

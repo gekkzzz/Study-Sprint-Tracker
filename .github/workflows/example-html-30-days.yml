@@ -1,0 +1,43 @@
+# ============================================================
+# Example workflow — HTML in 30 Days sprint
+# Copy this file into YOUR repository's .github/workflows/
+# and update start_date to your actual start date.
+# ============================================================
+
+name: Study Sprint Tracker (HTML 30 Days)
+
+on:
+  push:
+    branches:
+      - main
+    # Prevent an infinite loop: ignore the bot's own journal commits.
+    paths-ignore:
+      - '**.md'
+
+# Required so the Action can commit the updated journal back to your repo.
+permissions:
+  contents: write
+
+jobs:
+  track-sprint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history is needed for a clean git push.
+          fetch-depth: 0
+
+      - name: Track HTML Sprint Progress
+        id: sprint
+        uses: your-username/study-sprint-tracker@v1   # replace with real ref
+        with:
+          track_name: 'HTML in 30 Days'
+          total_days: 30
+          start_date: '2025-06-01'        # ← set your actual start date
+          journal_file: 'STUDY_JOURNAL.md'
+
+      # Optional: print the progress string in the Actions log.
+      - name: Echo progress
+        run: echo "Sprint status — ${{ steps.sprint.outputs.progress }}"

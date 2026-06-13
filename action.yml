@@ -1,0 +1,35 @@
+name: 'Study Sprint Tracker'
+description: 'Automatically tracks your custom learning sprints and journals daily progress as Markdown entries in your repository.'
+
+branding:
+  icon: 'book-open'
+  color: 'purple'
+
+inputs:
+  track_name:
+    description: 'The name of your learning track (e.g., "HTML", "Full Stack", "Data Science").'
+    required: false
+    default: 'Coding Sprint'
+
+  total_days:
+    description: 'The total number of days in your sprint (e.g., 30, 100, 200).'
+    required: false
+    default: '180'
+
+  start_date:
+    description: 'The start date of your sprint in YYYY-MM-DD format (e.g., 2025-01-01).'
+    required: true
+
+  journal_file:
+    description: 'The path to the Markdown journal file that will be updated on each push.'
+    required: false
+    default: 'STUDY_JOURNAL.md'
+
+  skip_git:
+    description: 'Set to "true" to skip the git commit/push step (useful for dry-run testing).'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
